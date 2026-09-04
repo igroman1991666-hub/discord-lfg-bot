@@ -4,6 +4,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 from dotenv import load_dotenv
+from discord.ext import tasks
+
 
 import db
 
@@ -101,10 +103,17 @@ class LFGView(discord.ui.View):
         )
 
 
+@tasks.loop(hours=1)
+async def cleanup():
+    deleted = db.delete_old()
+    if deleted:
+        print(f"Удалено старых наборов: {deleted}")
+
 @bot.event
 async def setup_hook():
     db.init_db()
     bot.add_view(LFGView())
+    cleanup.start()
 
 
 @bot.event
